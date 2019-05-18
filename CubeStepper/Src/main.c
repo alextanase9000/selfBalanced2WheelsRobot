@@ -78,8 +78,8 @@ TIM_OC_InitTypeDef sConfigOC;
 
 uint16_t PrescalerValue = 0;
 
-TM_L3GD20_t L3DG20_Data;
-TM_LIS302DL_t LIS302DL_Data;
+TM_L3GD20_t L3DG20_Data;//gyro
+TM_LIS302DL_t LIS302DL_Data;// acc
 
 void SystemClock_Config(void);
 static void MX_GPIO_Init(void);
