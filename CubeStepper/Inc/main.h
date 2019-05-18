@@ -48,35 +48,13 @@
 /* Private define ------------------------------------------------------------*/
 
 /* USER CODE BEGIN Private defines */
-#define EXPECTING_SENSORS    1
-
-#define TEMP_CURRENT        temps[1]    /* Temperature we actually have */
-#define TEMP_WANT            temps[0]    /* Temperature we want to have */
-
-/* Choose PID parameters */
-#define PID_PARAM_KP        100            /* Proportional */
-#define PID_PARAM_KI        0.025        /* Integral */
-#define PID_PARAM_KD        20            /* Derivative */
 
 /* USER CODE END Private defines */
-#define DOUBLECLICK_Z                    ((uint8_t)0x60)
-#define SINGLECLICK_Z                    ((uint8_t)0x50)
 
-#define ACC_WANT            0    /* ACC we want to have */
-
-/* Choose PID parameters */
-#define PID_PARAM_KP        100            /* Proportional */
-#define PID_PARAM_KI        0.025        /* Integral */
-#define PID_PARAM_KD        20            /* Derivative */
-
-#define Stepper_Period_Max 75
-#define Stepper_Period_Min 16
-/* TIM2 Autoreload and Capture Compare register values */
-#define TIM_ARR                          ((uint16_t)1900)
-#define TIM_CCR                          ((uint16_t)1000)
 /* Exported macro ------------------------------------------------------------*/
 #define ABS(x)                           (x < 0) ? (-x) : x
 #define MAX(a,b)                         (a < b) ? (b) : a
+
 void _Error_Handler(char *, int);
 void Stepper_Set_Speed(uint8_t );
 
