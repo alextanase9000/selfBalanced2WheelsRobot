@@ -49,7 +49,7 @@
 #define Ki 60000 // 60000
 #define ref 0    // 0
 #define DAJOS 180000 //180000
-#define NFS 33 //33
+#define NFS 36 //33
 #define LIMIT 0  //0
 #define deg 57.3 //180/pi
 #define dt 0.6
@@ -104,23 +104,25 @@ void Accelero_Init(void)
 
 void stepSpeed(int speed)
 {
-	if(speed<=NFS && speed >=0)
+	if(speed > NFS)
 	{
-		htim4.Init.Period = 300 * (NFS+3-speed);//160
-		htim4.Instance->CCR1 = 150 * (NFS+3-speed);//140
-		//htim4.Instance->CCR1 = 140 * speed;
-		htim4.Instance->CCMR1 |= TIM_CCMR1_OC1PE;
-		htim4.Instance->CCMR1 &= ~TIM_CCMR1_OC1FE;
-		HAL_TIM_Base_Init(&htim4);
-	}
-	else if(speed > NFS)
-	{
-		stepSpeed(NFS);
+		speed = NFS;
 	}
 	else if(speed < 0)
 	{
-		stepSpeed(0);
+		speed = 0;
 	}
+	else
+	{
+		//do nothing
+	}
+
+	htim4.Init.Period = 300 * (NFS-speed);//160
+	htim4.Instance->CCR1 = 150 * (NFS-speed);//140
+	//htim4.Instance->CCR1 = 140 * speed;
+	htim4.Instance->CCMR1 |= TIM_CCMR1_OC1PE;
+	htim4.Instance->CCMR1 &= ~TIM_CCMR1_OC1FE;
+	HAL_TIM_Base_Init(&htim4);
 }
 
 void setDirection(int direction)
@@ -158,18 +160,21 @@ void readData()
 
 }
 
+void System_Init()
+{
+	    HAL_Init();
+		SystemClock_Config();
+		MX_GPIO_Init();
+		MX_TIM4_Init();
+		MX_SPI1_Init();
+		MX_SPI2_Init();
+		Accelero_Init();
+		TM_L3GD20_Init();
+}
 int main(void)
 {
-	HAL_Init();
-	SystemClock_Config();
-
-	MX_GPIO_Init();
-	MX_TIM4_Init();
-	MX_SPI1_Init();
-	MX_SPI2_Init();
+	System_Init();
 	HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_1);
-	Accelero_Init();
-	TM_L3GD20_Init();
 
 	readData();
 
@@ -189,7 +194,7 @@ int main(void)
 
 		roll=atan2f(Acc_Y,Acc_Z) * deg;
 
-		gyroYangle=(gyro_Y-6);// 6=offset
+		gyroYangle=(gyro_Y);// 6=offset
 
 		compAngleY = 0.99 * (compAngleY + gyroYangle * dt/10000) + 0.01 * roll;
 
@@ -203,7 +208,6 @@ int main(void)
 			setDirection(1);
 			pause(0);
 			stepSpeed(ABS(duty/DAJOS));
-
 		}
 		else if(error<-LIMIT)
 		{
@@ -216,12 +220,8 @@ int main(void)
 		{
 			pause(1);
 		}
-
 		lasterror=error;
 	}
-
-
-
 }
 
 
