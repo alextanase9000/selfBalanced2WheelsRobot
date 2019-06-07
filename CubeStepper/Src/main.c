@@ -45,14 +45,14 @@
 #include <math.h>
 
 #define Kp 1     // 1
-#define Kd 400   // 400
-#define Ki 60000 // 60000
+#define Kd 270  // 400
+#define Ki 600 // 60000
 #define ref 0    // 0
-#define DAJOS 180000 //180000
-#define NFS 36 //33
+#define DAJOS 100000 //180000
+#define NFS 40 //36
 #define LIMIT 0  //0
 #define deg 57.3 //180/pi
-#define dt 0.6
+#define dt 1
 
 
 float interval=0;
@@ -69,8 +69,7 @@ float gyroYangle = 1;
 float compAngleX=0;
 float compAngleY=0;
 
-float error=0, lasterror=0, duty=0;
-
+float error=0, lasterror=0, duty=0, dutyf;
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi2;
 TIM_HandleTypeDef htim4;
@@ -106,19 +105,21 @@ void stepSpeed(int speed)
 {
 	if(speed > NFS)
 	{
-		speed = NFS;
+		speed = NFS-5;
 	}
 	else if(speed < 0)
 	{
-		speed = 0;
+		speed = 5;
 	}
 	else
 	{
 		//do nothing
 	}
 
-	htim4.Init.Period = 300 * (NFS-speed);//160
-	htim4.Instance->CCR1 = 150 * (NFS-speed);//140
+	//htim4.Init.Period = 160 * (NFS-speed);//160
+	//htim4.Instance->CCR1 = 140 * (NFS-speed);//140
+	  htim4.Init.Period = 100000/speed/4;
+	  htim4.Instance->CCR1 = 80000/speed/4;
 	//htim4.Instance->CCR1 = 140 * speed;
 	htim4.Instance->CCMR1 |= TIM_CCMR1_OC1PE;
 	htim4.Instance->CCMR1 &= ~TIM_CCMR1_OC1FE;
@@ -171,6 +172,7 @@ void System_Init()
 		Accelero_Init();
 		TM_L3GD20_Init();
 }
+
 int main(void)
 {
 	System_Init();
@@ -181,39 +183,39 @@ int main(void)
 	roll  = atan2f(Acc_Y,Acc_Z) * deg;
 	pitch = atan2f(-1*Acc_X,Acc_Z) * deg;
 
-	gyro_X=roll;
+	//gyro_X=roll;
 	gyro_Y=pitch;
-	compAngleX=roll;
+	//compAngleX=roll;
 	compAngleY=pitch;
 	stepSpeed(3);
 
 	while (1)
 	{
-		HAL_Delay(1);
+		HAL_Delay(7);
 		readData();
 
-		roll=atan2f(Acc_Y,Acc_Z) * deg;
+		gyroYangle=(gyro_Y-6);// 6=offset
+		roll = atan2f(Acc_Y,Acc_Z) * deg;
+        pitch =  (compAngleY + gyroYangle * dt/10000);
 
-		gyroYangle=(gyro_Y);// 6=offset
-
-		compAngleY = 0.99 * (compAngleY + gyroYangle * dt/10000) + 0.01 * roll;
+		compAngleY = 0.99 * pitch + 0.01 * roll;
 
 		//PID ALgorithm
 		error = compAngleY-ref;
 		interval += (error*dt);
 		duty= (Kp*error + (Kd*1000*error/dt) + Ki*interval/1000);
-		//
+	    dutyf = duty/DAJOS;
 		if(error>LIMIT)
 		{
 			setDirection(1);
 			pause(0);
-			stepSpeed(ABS(duty/DAJOS));
+			stepSpeed(ABS(dutyf));
 		}
 		else if(error<-LIMIT)
 		{
 			setDirection(0);
 			pause(0);
-			stepSpeed(ABS(duty/DAJOS));
+			stepSpeed(ABS(dutyf));
 		}
 
 		else if(error>=-LIMIT && error <= LIMIT)
@@ -397,7 +399,7 @@ static void MX_GPIO_Init(void)
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-	/*Configure GPIO pin : PD12 */
+	/*Configure GPIO pin : PD12 PWM*/
 	GPIO_InitStruct.Pin = GPIO_PIN_12 ;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
