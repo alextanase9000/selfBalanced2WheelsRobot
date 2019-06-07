@@ -37,7 +37,7 @@
  */
 /* Includes ------------------------------------------------------------------*/
 
-//Proj by Tanase Alexandru
+//Proj by Tanase Alexandru-Anton
 #include "main.h"
 #include "stm32f4xx_hal.h"
 #include "stm32f4_discovery_lis302dl.h"
